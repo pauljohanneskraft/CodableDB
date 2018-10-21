@@ -1,0 +1,16 @@
+PODS:
+  - CodableDB (0.1.0)
+
+DEPENDENCIES:
+  - CodableDB (from `../`)
+
+EXTERNAL SOURCES:
+  CodableDB:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  CodableDB: 9c471f86f4b6eb5a93e85c24ebbdf72cdc1746cd
+
+PODFILE CHECKSUM: bdb30f12fcc358c67d9bc98b257c823f4be027c9
+
+COCOAPODS: 1.5.3

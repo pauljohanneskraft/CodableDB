@@ -1,0 +1,6 @@
+framework module CodableDB {
+  umbrella header "CodableDB-umbrella.h"
+
+  export *
+  module * { export * }
+}

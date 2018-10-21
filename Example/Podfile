@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'CodableDB_Example' do
+  pod 'CodableDB', :path => '../'
+
+  target 'CodableDB_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
