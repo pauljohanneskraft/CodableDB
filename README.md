@@ -47,7 +47,7 @@ requirement is a `primaryKey`:
 import CodableDB
 
 @Model
-struct Task: Object, Equatable {
+struct Task: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
 
     var id: String
@@ -129,7 +129,7 @@ Provide matching `CodingKeys` so the encoder uses the same name:
 
 ```swift
 @Model
-struct User: Object {
+struct User {
     static var primaryKey: CodingKey { CodingKeys.id }
 
     @Column("user_id") var id: String
@@ -150,13 +150,13 @@ Properties that conform to `Object` are stored in their own table and referenced
 
 ```swift
 @Model
-struct Author: Object, Equatable {
+struct Author: Equatable {
     static var primaryKey: CodingKey { CodingKeys.name }
     var name: String
 }
 
 @Model
-struct Book: Object, Equatable {
+struct Book: Equatable {
     static var primaryKey: CodingKey { CodingKeys.title }
     var title: String
     var author: Author  // stored in the "Author" table, linked by primary key

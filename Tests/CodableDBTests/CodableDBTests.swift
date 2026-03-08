@@ -8,7 +8,7 @@ import Testing
 
 /// A model exercising every supported primitive type.
 @Model
-struct TestObject: Object, Equatable {
+struct TestObject: Equatable {
     static var primaryKey: CodingKey { CodingKeys.string }
 
     var string: String
@@ -30,7 +30,7 @@ struct TestObject: Object, Equatable {
 
 /// A minimal model with just a string primary key.
 @Model
-struct SimpleObject: Object, Equatable {
+struct SimpleObject: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var name: String
@@ -39,14 +39,14 @@ struct SimpleObject: Object, Equatable {
 
 /// A model that nests another `Object` as a foreign-key reference.
 @Model
-struct ComposedTestObject: Object, Equatable {
+struct ComposedTestObject: Equatable {
     static var primaryKey: CodingKey { CodingKeys.testObject }
     var testObject: TestObject
 }
 
 /// A model with a boolean field.
 @Model
-struct FlagObject: Object, Equatable {
+struct FlagObject: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var isActive: Bool

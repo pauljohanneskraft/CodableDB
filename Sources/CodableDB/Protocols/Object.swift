@@ -6,7 +6,8 @@
 /// A default `identifier` is provided using the type name.
 ///
 /// ```swift
-/// struct User: Object {
+/// @Model
+/// struct User {
 ///     static var primaryKey: CodingKey { CodingKeys.id }
 ///     var id: String
 ///     var name: String

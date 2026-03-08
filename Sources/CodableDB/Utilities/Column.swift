@@ -6,7 +6,7 @@
 ///
 /// ```swift
 /// @Model
-/// struct User: Object {
+/// struct User {
 ///     static var primaryKey: CodingKey { CodingKeys.id }
 ///
 ///     var id: String

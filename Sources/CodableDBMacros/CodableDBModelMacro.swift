@@ -1,7 +1,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// Generates `KeyPathCodable` conformance with an auto-derived `columns` dictionary.
+/// Generates `Object` and `KeyPathCodable` conformance with an auto-derived `columns` dictionary.
 ///
 /// For each stored `var` property, the macro maps `\Self.propertyName` to its
 /// SQL column name. If a property is annotated with `@Column("custom_name")`,
@@ -32,7 +32,7 @@ public struct CodableDBModelMacro: MemberMacro, ExtensionMacro {
         return [decl]
     }
 
-    // MARK: - ExtensionMacro (adds KeyPathCodable conformance)
+    // MARK: - ExtensionMacro (adds Object & KeyPathCodable conformance)
 
     public static func expansion(
         of node: AttributeSyntax,
@@ -42,7 +42,7 @@ public struct CodableDBModelMacro: MemberMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         let ext: DeclSyntax = """
-            extension \(type.trimmed): KeyPathCodable {}
+            extension \(type.trimmed): Object, KeyPathCodable {}
             """
         return [ext.cast(ExtensionDeclSyntax.self)]
     }

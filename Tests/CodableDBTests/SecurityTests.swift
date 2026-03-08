@@ -8,7 +8,7 @@ import Testing
 
 /// A model whose primary key is a string — the main injection target.
 @Model
-struct InjectionTarget: Object, Equatable {
+struct InjectionTarget: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var value: String
@@ -17,7 +17,7 @@ struct InjectionTarget: Object, Equatable {
 
 /// A model with optional string fields to test NULL/injection combos.
 @Model
-struct OptionalInjectionTarget: Object, Equatable {
+struct OptionalInjectionTarget: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var notes: String?
@@ -25,7 +25,7 @@ struct OptionalInjectionTarget: Object, Equatable {
 
 /// A canary table used to verify it survives injection attempts.
 @Model
-struct Canary: Object, Equatable {
+struct Canary: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var alive: Bool
@@ -33,7 +33,7 @@ struct Canary: Object, Equatable {
 
 /// A model with floating-point fields for boundary testing.
 @Model
-struct FloatTarget: Object, Equatable {
+struct FloatTarget: Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var doubleVal: Double
@@ -945,7 +945,7 @@ struct ComposedObjectInjectionTests {
 struct DateInjectionTests {
 
     @Model
-    struct DateTarget: Object, Equatable {
+    struct DateTarget: Equatable {
         static var primaryKey: CodingKey { CodingKeys.id }
         var id: String
         var timestamp: Date

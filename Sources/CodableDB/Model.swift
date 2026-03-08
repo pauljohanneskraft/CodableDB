@@ -1,6 +1,6 @@
-/// Automatically generates `KeyPathCodable` conformance for an `Object` type.
+/// Automatically generates `Object` and `KeyPathCodable` conformance.
 ///
-/// Attach this macro to a struct that conforms to `Object`. It inspects
+/// Attach this macro to a struct and provide a `primaryKey`. It inspects
 /// all stored `var` properties and synthesizes a `columns` dictionary
 /// mapping each key path to its SQL column name.
 ///
@@ -9,7 +9,7 @@
 ///
 /// ```swift
 /// @Model
-/// struct Task: Object {
+/// struct Task: Equatable {
 ///     static var primaryKey: CodingKey { CodingKeys.id }
 ///
 ///     var id: String
@@ -21,13 +21,13 @@
 ///
 /// This generates:
 /// ```swift
-/// extension Task: KeyPathCodable {
+/// extension Task: Object, KeyPathCodable {
 ///     static var columns: [PartialKeyPath<Task>: String] {
 ///         [\.id: "id", \.title: "title", \.priority: "priority", \.isCompleted: "is_done"]
 ///     }
 /// }
 /// ```
 @attached(member, names: named(columns))
-@attached(extension, conformances: KeyPathCodable)
+@attached(extension, conformances: Object, KeyPathCodable)
 public macro Model() =
     #externalMacro(module: "CodableDBMacros", type: "CodableDBModelMacro")
