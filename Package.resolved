@@ -1,0 +1,15 @@
+{
+  "originHash" : "aecbebb7ac46d4079355f179de48d979a8dd5e456f17e524d4331d02f01beeb4",
+  "pins" : [
+    {
+      "identity" : "sift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pauljohanneskraft/Sift",
+      "state" : {
+        "branch" : "main",
+        "revision" : "98862b8499cf654c6298ab824db859c76db6e508"
+      }
+    }
+  ],
+  "version" : 3
+}
