@@ -1,45 +1,38 @@
 /// A type whose properties can be referenced by key path in SQL queries.
 ///
-/// By default, the SQL column name for a key path is the Swift property name.
-/// Override ``columnOverrides`` to provide custom column names for properties
-/// annotated with ``Column``.
+/// Rather than implementing this protocol manually, use the ``Model()``
+/// macro which auto-generates the ``columns`` dictionary from your stored properties:
 ///
 /// ```swift
-/// struct User: Object, KeyPathCodable {
+/// @Model
+/// struct User: Object {
 ///     static var primaryKey: CodingKey { CodingKeys.id }
 ///
 ///     var id: String
-///     var name: String  // column = "name"
+///     var name: String
 ///     @Column("email_address") var email: String
-///
-///     enum CodingKeys: String, CodingKey {
-///         case id, name
-///         case email = "email_address"
-///     }
-///     static var columnOverrides: [PartialKeyPath<User>: String] {
-///         [\.email: "email_address"]
-///     }
 /// }
 /// ```
+///
+/// For manual conformance, provide a ``columns`` dictionary mapping every
+/// stored key path to its SQL column name.
 public protocol KeyPathCodable: Codable {
-    /// A dictionary mapping key paths to custom SQL column names.
+    /// A dictionary mapping **every** stored key path to its SQL column name.
     ///
-    /// Only override this when using ``Column`` to rename properties.
-    /// Properties not listed here use their Swift property name.
-    static var columnOverrides: [PartialKeyPath<Self>: String] { get }
+    /// This is the source of truth for key-path → column resolution used
+    /// by Sift predicates and orderings.
+    ///
+    /// ```swift
+    /// static var columns: [PartialKeyPath<Self>: String] {
+    ///     [\.id: "id", \.name: "name", \.score: "score"]
+    /// }
+    /// ```
+    static var columns: [PartialKeyPath<Self>: String] { get }
 }
 
 extension KeyPathCodable {
-    public static var columnOverrides: [PartialKeyPath<Self>: String] { [:] }
-
     /// Resolves the SQL column name for the given key path.
-    ///
-    /// Checks ``columnOverrides`` first, then falls back to the
-    /// key path's underlying property name.
     static func columnName(for keyPath: PartialKeyPath<Self>) -> String? {
-        if let override = columnOverrides[keyPath] {
-            return override
-        }
-        return keyPath._kvcKeyPathString
+        columns[keyPath]
     }
 }

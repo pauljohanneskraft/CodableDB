@@ -1,23 +1,21 @@
-/// A property wrapper that optionally overrides a property's SQL column name.
+/// A property wrapper that overrides a property's SQL column name.
 ///
-/// By default, CodableDB uses the property name as the column name.
-/// Use `@Column("custom_name")` when the SQL column name should differ:
+/// Use `@Column("custom_name")` when the SQL column name should differ
+/// from the Swift property name. When using ``Model()``, the
+/// macro reads the `@Column` attribute automatically:
 ///
 /// ```swift
-/// struct User: Object, KeyPathCodable {
+/// @Model
+/// struct User: Object {
 ///     static var primaryKey: CodingKey { CodingKeys.id }
 ///
 ///     var id: String
-///     var name: String                           // column = "name"
-///     @Column("email_address") var email: String // column = "email_address"
+///     var name: String
+///     @Column("email_address") var email: String
 ///
-///     // Provide custom CodingKeys + columnOverrides for renamed columns:
 ///     enum CodingKeys: String, CodingKey {
 ///         case id, name
 ///         case email = "email_address"
-///     }
-///     static var columnOverrides: [PartialKeyPath<User>: String] {
-///         [\.email: "email_address"]
 ///     }
 /// }
 /// ```

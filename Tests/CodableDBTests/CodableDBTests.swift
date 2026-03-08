@@ -7,7 +7,8 @@ import Testing
 // MARK: - Test Models
 
 /// A model exercising every supported primitive type.
-struct TestObject: Object, KeyPathCodable, Equatable {
+@Model
+struct TestObject: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.string }
 
     var string: String
@@ -28,7 +29,8 @@ struct TestObject: Object, KeyPathCodable, Equatable {
 }
 
 /// A minimal model with just a string primary key.
-struct SimpleObject: Object, KeyPathCodable, Equatable {
+@Model
+struct SimpleObject: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var name: String
@@ -36,13 +38,15 @@ struct SimpleObject: Object, KeyPathCodable, Equatable {
 }
 
 /// A model that nests another `Object` as a foreign-key reference.
-struct ComposedTestObject: Object, KeyPathCodable, Equatable {
+@Model
+struct ComposedTestObject: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.testObject }
     var testObject: TestObject
 }
 
 /// A model with a boolean field.
-struct FlagObject: Object, KeyPathCodable, Equatable {
+@Model
+struct FlagObject: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
     var id: String
     var isActive: Bool
@@ -287,7 +291,7 @@ struct PrimitiveTypeTests {
         try db.insert(object)
 
         let result = try #require(try db.getAll(SimpleObject.self).first)
-        #expect(result.id == "special")
+        #expect(result.name == object.name)
     }
 
     @Test func emptyString() throws {

@@ -6,12 +6,13 @@ A lightweight, type-safe Swift library that persists any `Codable` struct direct
 
 ## Features
 
-- **Zero-config persistence** — conform to `Object` and start storing data immediately.
+- **Zero-config persistence** — add `@Model`, conform to `Object`, and start storing data immediately.
 - **Type-safe queries** — filter and sort with Swift key-path expressions powered by [Sift](https://github.com/pjk-code/sift).
 - **Automatic table creation** — tables and columns are derived at runtime from your `Codable` conformance.
 - **Nested object support** — properties that are themselves `Object` types are stored in their own tables and linked by primary key.
 - **All Swift primitives** — `String`, `Bool`, `Int`, `Int8`–`Int64`, `UInt8`–`UInt64`, `Double`, `Float`, `CGFloat`, `Date`, and optionals.
-- **`@Column` property wrapper** — customize the column name for any property without writing manual coding keys.
+- **`@Model` macro** — auto-generates the key-path-to-column mapping so you never write boilerplate.
+- **`@Column` property wrapper** — customize the column name for any property.
 
 ## Requirements
 
@@ -38,12 +39,14 @@ targets: [
 
 ### 1. Define a model
 
-Conform your struct to `Object` and `KeyPathCodable`. The only requirement is a `primaryKey`:
+Annotate your struct with `@Model` and conform to `Object`. The only
+requirement is a `primaryKey`:
 
 ```swift
 import CodableDB
 
-struct Task: Object, KeyPathCodable, Equatable {
+@Model
+struct Task: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.id }
 
     var id: String
@@ -52,6 +55,9 @@ struct Task: Object, KeyPathCodable, Equatable {
     var isCompleted: Bool
 }
 ```
+
+The macro generates `KeyPathCodable` conformance automatically — no manual
+column mappings needed.
 
 ### 2. Open a database
 
@@ -116,15 +122,24 @@ Supported operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `&&`, `||`.
 
 ### 5. Custom column names with `@Column`
 
-Use the `@Column` property wrapper to map a Swift property to a specific column name:
+Use the `@Column` property wrapper to map a Swift property to a specific column name.
+The `@Model` macro reads `@Column` attributes automatically.
+Provide matching `CodingKeys` so the encoder uses the same name:
 
 ```swift
-struct User: Object, KeyPathCodable {
+@Model
+struct User: Object {
     static var primaryKey: CodingKey { CodingKeys.id }
 
-    @Column(name: "user_id") var id: String
-    @Column(name: "full_name") var name: String
+    @Column("user_id") var id: String
+    @Column("full_name") var name: String
     var age: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id = "user_id"
+        case name = "full_name"
+        case age
+    }
 }
 ```
 
@@ -133,12 +148,14 @@ struct User: Object, KeyPathCodable {
 Properties that conform to `Object` are stored in their own table and referenced by primary key:
 
 ```swift
-struct Author: Object, KeyPathCodable, Equatable {
+@Model
+struct Author: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.name }
     var name: String
 }
 
-struct Book: Object, KeyPathCodable, Equatable {
+@Model
+struct Book: Object, Equatable {
     static var primaryKey: CodingKey { CodingKeys.title }
     var title: String
     var author: Author  // stored in the "Author" table, linked by primary key

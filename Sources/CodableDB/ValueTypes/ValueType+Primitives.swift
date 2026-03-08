@@ -12,8 +12,8 @@ extension String: ValueType {
     }
 
     public var databaseRepresentation: String {
-        let escaped = addingPercentEncoding(withAllowedCharacters: .databaseAllowed) ?? description
-        return "\"" + escaped + "\""
+        let escaped = replacingOccurrences(of: "'", with: "''")
+        return "'" + escaped + "'"
     }
 
     public static var databaseType: String { "LONGTEXT" }
