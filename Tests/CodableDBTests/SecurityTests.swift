@@ -572,12 +572,11 @@ struct OptionalFieldInjectionTests {
             id: "opt-evil",
             notes: "'; DROP TABLE Canary;--"
         )
-        // Whether insert succeeds or fails, the canary must survive
-        do {
-            try db.insert(malicious)
-        } catch {
-            // Acceptable — some optional column handling may reject
-        }
+        try db.insert(malicious)
+
+        let results = try db.getAll(OptionalInjectionTarget.self)
+        let result = results.first(where: { $0.id == "opt-evil" })
+        #expect(result?.notes == "'; DROP TABLE Canary;--")
         try verifyCanary()
     }
 
@@ -590,13 +589,11 @@ struct OptionalFieldInjectionTests {
         try db.insert(obj)
 
         obj.notes = "'; DROP TABLE Canary;--"
-        do {
-            try db.update(obj)
-        } catch {
-            // Acceptable — optional field handling limitation
-        }
+        try db.update(obj)
 
-        // The critical assertion: canary must survive regardless
+        let results = try db.getAll(OptionalInjectionTarget.self)
+        let result = results.first(where: { $0.id == "evil-swap" })
+        #expect(result?.notes == "'; DROP TABLE Canary;--")
         try verifyCanary()
     }
 
@@ -605,16 +602,14 @@ struct OptionalFieldInjectionTests {
         let db = try makeSecurityTestDatabase()
         let verifyCanary = try plantCanary(in: db)
 
-        // Inserting nil first may not create the column;
-        // the update may then fail. Either way, canary must survive.
         var obj = OptionalInjectionTarget(id: "nil-to-evil", notes: nil)
-        do {
-            try db.insert(obj)
-            obj.notes = "' OR '1'='1'; DROP TABLE Canary;--"
-            try db.update(obj)
-        } catch {
-            // Acceptable — optional column schema limitation
-        }
+        try db.insert(obj)
+        obj.notes = "' OR '1'='1'; DROP TABLE Canary;--"
+        try db.update(obj)
+
+        let results = try db.getAll(OptionalInjectionTarget.self)
+        let result = results.first(where: { $0.id == "nil-to-evil" })
+        #expect(result?.notes == "' OR '1'='1'; DROP TABLE Canary;--")
         try verifyCanary()
     }
 
@@ -626,14 +621,12 @@ struct OptionalFieldInjectionTests {
         var obj = OptionalInjectionTarget(id: "evil-to-nil", notes: "'; DROP TABLE Canary;--")
         try db.insert(obj)
 
-        // Update to nil triggers delete + re-insert. The re-insert may exclude
-        // the notes column, causing a constraint error. Either way, canary survives.
         obj.notes = nil
-        do {
-            try db.update(obj)
-        } catch {
-            // Acceptable — NOT NULL constraint from original schema
-        }
+        try db.update(obj)
+
+        let results = try db.getAll(OptionalInjectionTarget.self)
+        let result = results.first(where: { $0.id == "evil-to-nil" })
+        #expect(result?.notes == nil)
         try verifyCanary()
     }
 }
@@ -819,7 +812,7 @@ struct ResourceExhaustionTests {
 @Suite("Encoding Representation Attacks")
 struct EncodingRepresentationTests {
 
-    @Test("String 'NULL' in optional field — documents encoding ambiguity")
+    @Test("String 'NULL' in optional field round-trips correctly")
     func stringNullInOptionalField() throws {
         let db = try makeSecurityTestDatabase()
         // Insert with non-nil value "NULL" (the string)
@@ -829,15 +822,9 @@ struct EncodingRepresentationTests {
         let results = try db.getAll(OptionalInjectionTarget.self)
         let sn = results.first(where: { $0.id == "string-null" })
 
-        // KNOWN LIMITATION: The library uses the literal string "NULL" for nil,
-        // so the string value "NULL" is indistinguishable from actual nil on decode.
-        // This documents a real encoding ambiguity — the string "NULL" is lost.
-        #expect(
-            sn?.notes == nil,
-            """
-            Known limitation: String 'NULL' is conflated with SQL NULL \
-            because the encoder uses the literal 'NULL' for nil values.
-            """)
+        // The string "NULL" should round-trip correctly — it's stored as 'NULL' (quoted)
+        // in SQL, distinct from unquoted NULL which represents actual nil.
+        #expect(sn?.notes == "NULL")
     }
 
     @Test("Actual NULL insert after non-nil — canary survives")
@@ -845,15 +832,14 @@ struct EncodingRepresentationTests {
         let db = try makeSecurityTestDatabase()
         let verifyCanary = try plantCanary(in: db)
 
-        // First insert creates the column as NOT NULL
         try db.insert(OptionalInjectionTarget(id: "non-nil", notes: "value"))
+        try db.insert(OptionalInjectionTarget(id: "actual-null", notes: nil))
 
-        // Inserting nil may fail due to NOT NULL constraint — that's a known limitation
-        do {
-            try db.insert(OptionalInjectionTarget(id: "actual-null", notes: nil))
-        } catch {
-            // Acceptable — NOT NULL constraint from schema created by first insert
-        }
+        let results = try db.getAll(OptionalInjectionTarget.self)
+        let nonNil = results.first(where: { $0.id == "non-nil" })
+        let actualNull = results.first(where: { $0.id == "actual-null" })
+        #expect(nonNil?.notes == "value")
+        #expect(actualNull?.notes == nil)
         try verifyCanary()
     }
 
@@ -965,30 +951,31 @@ struct DateInjectionTests {
         var timestamp: Date
     }
 
-    @Test("Date insertion — format is not SQL-safe without quoting")
+    @Test("Date insertion round-trips correctly")
     func dateRoundTrip() throws {
         let db = try makeSecurityTestDatabase()
         let date = Date(timeIntervalSince1970: 0)  // 1970-01-01
         let obj = DateTarget(id: "epoch", timestamp: date)
-        // Date.databaseRepresentation returns "yyyy-MM-dd HH:mm:ss" without quotes,
-        // which causes an SQL syntax error. This documents the limitation.
-        #expect(throws: (any Error).self) {
-            try db.insert(obj)
-        }
+        try db.insert(obj)
+
+        let result = try #require(try db.getAll(DateTarget.self).first)
+        #expect(result.id == "epoch")
+        #expect(result.timestamp == date)
     }
 
-    @Test("Distant past and future dates — rejected safely")
+    @Test("Distant past and future dates round-trip correctly")
     func extremeDates() throws {
         let db = try makeSecurityTestDatabase()
         let past = DateTarget(id: "past", timestamp: .distantPast)
         let future = DateTarget(id: "future", timestamp: .distantFuture)
-        // Date formatting produces unquoted strings, causing SQL syntax errors
-        #expect(throws: (any Error).self) {
-            try db.insert(past)
-        }
-        #expect(throws: (any Error).self) {
-            try db.insert(future)
-        }
+        try db.insert(past)
+        try db.insert(future)
+
+        let results = try db.getAll(DateTarget.self)
+        let pastResult = results.first(where: { $0.id == "past" })
+        let futureResult = results.first(where: { $0.id == "future" })
+        #expect(pastResult != nil)
+        #expect(futureResult != nil)
     }
 }
 

@@ -32,8 +32,12 @@ private class DatabaseObjectEncoder<O: Object>: Encoder {
         return KeyedEncodingContainer(container)
     }
 
-    func unkeyedContainer() -> UnkeyedEncodingContainer { fatalError("Unkeyed containers are not supported") }
-    func singleValueContainer() -> SingleValueEncodingContainer { fatalError("Single value containers are not supported") }
+    func unkeyedContainer() -> UnkeyedEncodingContainer {
+        fatalError("Unkeyed containers are not supported")
+    }
+    func singleValueContainer() -> SingleValueEncodingContainer {
+        fatalError("Single value containers are not supported")
+    }
 
     var information: EncodingInformationStore {
         containers.reduce(into: EncodingInformationStore()) { acc, container in
@@ -44,7 +48,9 @@ private class DatabaseObjectEncoder<O: Object>: Encoder {
 
 // MARK: - Keyed Encoding Container
 
-private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEncodingContainerProtocol, HasEncodingInformation {
+private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>:
+    KeyedEncodingContainerProtocol, HasEncodingInformation
+{
     var codingPath = [CodingKey]()
     var information = EncodingInformationStore()
 
@@ -56,26 +62,62 @@ private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEn
 
     // MARK: Optional Primitives
 
-    func encodeIfPresent(_ value: Int?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Bool?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Int8?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Int16?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Int32?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Int64?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: UInt?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: UInt8?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: UInt16?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: UInt32?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: UInt64?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
-    func encodeIfPresent(_ value: Float?, forKey key: Key) throws { try encodeOptionalValueType(value, forKey: key) }
+    func encodeIfPresent(_ value: Int?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Bool?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Int8?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Int16?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Int32?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Int64?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: UInt?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: UInt8?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: UInt16?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: UInt32?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: UInt64?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Float?, forKey key: Key) throws {
+        if let value, !value.isFinite { throw CodableDBError.unsupportedType }
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: Double?, forKey key: Key) throws {
+        if let value, !value.isFinite { throw CodableDBError.unsupportedType }
+        try encodeOptionalValueType(value, forKey: key)
+    }
+    func encodeIfPresent(_ value: String?, forKey key: Key) throws {
+        try encodeOptionalValueType(value, forKey: key)
+    }
 
     func encodeIfPresent<T: Encodable>(_ value: T?, forKey key: Key) throws {
         switch value {
         case let v as (any ValueType)?:
-            guard let type = T.self as? any ValueType.Type else { throw CodableDBError.unsupportedType }
+            guard let type = T.self as? any ValueType.Type else {
+                throw CodableDBError.unsupportedType
+            }
             try encodeOptionalGenericValueType(v, forKey: key, type: type)
         case let o as (any Object)?:
-            guard let type = T.self as? any Object.Type else { throw CodableDBError.unsupportedType }
+            guard let type = T.self as? any Object.Type else {
+                throw CodableDBError.unsupportedType
+            }
             try encodeOptionalGenericObject(o, forKey: key, type: type)
         default:
             throw CodableDBError.unsupportedType
@@ -86,8 +128,14 @@ private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEn
 
     func encode(_ value: Bool, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
     func encode(_ value: String, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
-    func encode(_ value: Double, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
-    func encode(_ value: Float, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
+    func encode(_ value: Double, forKey key: Key) throws {
+        guard value.isFinite else { throw CodableDBError.unsupportedType }
+        try encodeValueType(value, forKey: key)
+    }
+    func encode(_ value: Float, forKey key: Key) throws {
+        guard value.isFinite else { throw CodableDBError.unsupportedType }
+        try encodeValueType(value, forKey: key)
+    }
     func encode(_ value: Int, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
     func encode(_ value: Int8, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
     func encode(_ value: Int16, forKey key: Key) throws { try encodeValueType(value, forKey: key) }
@@ -113,7 +161,9 @@ private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEn
         try encodeOptionalGenericValueType(value, forKey: key, type: V.self)
     }
 
-    private func encodeOptionalGenericValueType(_ value: (any ValueType)?, forKey key: Key, type: any ValueType.Type) throws {
+    private func encodeOptionalGenericValueType(
+        _ value: (any ValueType)?, forKey key: Key, type: any ValueType.Type
+    ) throws {
         let column = ColumnEncoding(
             key: key,
             type: type.databaseType,
@@ -136,20 +186,31 @@ private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEn
     private func encodeObject(_ value: any Object, forKey key: Key) throws {
         let columns = try DatabaseEncoder().encode(value)
         let primaryKey = type(of: value).primaryKey
-        guard let primaryKeyValue = columns.first(where: { $0.key.stringValue == primaryKey.stringValue }) else {
+        guard
+            let primaryKeyValue = columns.first(where: {
+                $0.key.stringValue == primaryKey.stringValue
+            })
+        else {
             throw CodableDBError.unsupportedType
         }
         addColumns(columns, type: type(of: value))
-        addColumn(ColumnEncoding(key: key, type: String.nonNilDatabaseType, value: primaryKeyValue.value))
+        addColumn(
+            ColumnEncoding(key: key, type: String.nonNilDatabaseType, value: primaryKeyValue.value))
     }
 
-    private func encodeOptionalGenericObject(_ value: (any Object)?, forKey key: Key, type: any Object.Type) throws {
+    private func encodeOptionalGenericObject(
+        _ value: (any Object)?, forKey key: Key, type: any Object.Type
+    ) throws {
         guard let columns = try value.map({ try DatabaseEncoder().encode($0) }) else {
             addColumn(ColumnEncoding(key: key, type: String.databaseType, value: nullStringValue))
             return
         }
         let primaryKey = type.primaryKey
-        guard let primaryKeyValue = columns.first(where: { $0.key.stringValue == primaryKey.stringValue }) else {
+        guard
+            let primaryKeyValue = columns.first(where: {
+                $0.key.stringValue == primaryKey.stringValue
+            })
+        else {
             throw CodableDBError.unsupportedType
         }
         addColumns(columns, type: type)
@@ -175,8 +236,12 @@ private class DatabaseKeyedEncodingContainer<O: Object, Key: CodingKey>: KeyedEn
 
     // MARK: Unsupported
 
-    func nestedContainer<NestedKey: CodingKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> { fatalError("Nested containers are not supported") }
-    func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer { fatalError("Unkeyed containers are not supported") }
+    func nestedContainer<NestedKey: CodingKey>(keyedBy keyType: NestedKey.Type, forKey key: Key)
+        -> KeyedEncodingContainer<NestedKey>
+    { fatalError("Nested containers are not supported") }
+    func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
+        fatalError("Unkeyed containers are not supported")
+    }
     func superEncoder() -> Encoder { fatalError("Super encoding is not supported") }
     func superEncoder(forKey key: Key) -> Encoder { fatalError("Super encoding is not supported") }
 }

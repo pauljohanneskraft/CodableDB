@@ -19,7 +19,7 @@ extension Date: ValueType {
     }
 
     public var databaseRepresentation: String {
-        Date.databaseFormatter.string(from: self)
+        "'" + Date.databaseFormatter.string(from: self) + "'"
     }
 
     public static var databaseType: String { "DATETIME" }
